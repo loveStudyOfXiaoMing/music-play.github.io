@@ -11,7 +11,64 @@ const playlist = [
     duration: 259,
     url: './M500000DQxIe1FZ2v0.mp3',
     cover: 'cover.jpg',
-    lyricsFile: '七友-梁汉文歌词.lrc'
+    lyricsFile: '七友-梁汉文歌词.lrc',
+    lyricsInline: `[00:00.0]七友 - 梁汉文 (Edmond Leung)
+[00:08.49]词：林夕
+[00:16.99]曲：雷颂德
+[00:25.49]为了她 又再勉强去谈天论爱
+[00:30.77]又再振作去慰解他人
+[00:34.39]如难复合便尽早放开 凡事看开
+[00:39.75]又再讲 没有情人时还可自爱
+[00:45.1]忘掉或是为自己感慨
+[00:48.34]笑住说沉沦那些苦海 会有害
+[00:54.61]因为我 坚强到
+[00:56.45]利用自己的痛心 转换成爱心
+[01:01.87]抵我对她操心
+[01:04.27]已记不起我也有权利爱人
+[01:08.05]谁人曾照顾过我的感受
+[01:11.59]待我温柔 吻过我伤口
+[01:15.85]能得到的安慰是失恋者得救后
+[01:19.76]很感激忠诚的狗
+[01:22.39]谁人曾介意我也不好受
+[01:25.979996]为我出头 碰过我的手
+[01:30.14]重生者走得的都走
+[01:33.490005]谁人又为天使忧愁
+[01:37.07]甜言蜜语没有
+[01:39.14]但却有我这个好友
+[01:55.11]直到她 又再告诉我重新被爱
+[02:00.33]又再看透了我的将来
+[02:03.91]完成任务后大可喝彩 无谓搭台
+[02:09.27]别怪她 就怪我永远难得被爱
+[02:14.64]然后自虐地赞她可爱
+[02:17.91]往日最彷徨那刻好彩 有我在
+[02:24.2]因为我 坚强到
+[02:26.07]利用自己的痛心 转换成爱心
+[02:31.4]抵我对她操心
+[02:33.79001]已记不起我也有权利爱人
+[02:37.58]谁人曾照顾过我的感受
+[02:41.18]待我温柔 吻过我伤口
+[02:45.4]能得到的安慰是失恋者得救后
+[02:49.29001]很感激忠诚的狗
+[02:51.95999]谁人曾介意我也不好受
+[02:55.51]为我出头 碰过我的手
+[02:59.72]重生者走得的都走
+[03:03.02]谁人又为天使忧愁
+[03:06.67]甜言蜜语没有
+[03:08.67]但却有我这个好友
+[03:17.42]白雪公主不多
+[03:19.7]认命扮矮人的有太多个 早有六个
+[03:25.09]多我这个不多
+[03:27.45]我太好心还是太傻
+[03:30.45999]未问过她有没有 理我的感受
+[03:34.99]待我温柔 吻过我伤口
+[03:39.12]能得到的安慰是失恋者得救后
+[03:43.01]很感激忠诚的狗
+[03:45.69]谁人曾介意我也不好受
+[03:49.29001]为我出头 碰过我的手
+[03:53.47]重生者走得的都走
+[03:56.75]谁人又为天使忧愁
+[04:00.37]甜言蜜语没有
+[04:02.38]但却有我这个好友`
   }
 ];
 
@@ -46,10 +103,10 @@ const state = {
 };
 
 function initStudentInfo() {
-  if (studentInfo.id) {
+  if (elements.studentId && studentInfo.id) {
     elements.studentId.textContent = `学号：${studentInfo.id}`;
   }
-  if (studentInfo.name) {
+  if (elements.studentName && studentInfo.name) {
     elements.studentName.textContent = `姓名：${studentInfo.name}`;
   }
 }
@@ -98,33 +155,42 @@ function parseLRC(text) {
 async function loadLyrics(track) {
   state.lyrics = [];
   state.currentLyricIndex = -1;
-  if (!track.lyricsFile) {
+  const cacheKey = track.lyricsFile || track.title;
+  const applyLyrics = (parsed) => {
+    if (!parsed || !parsed.length) return false;
+    state.lyrics = parsed;
+    lyricsCache.set(cacheKey, parsed);
+    renderLyricWindow(0);
+    const current = elements.audio ? elements.audio.currentTime || 0 : 0;
+    updateLyricByTime(current);
+    return true;
+  };
+
+  if (!track.lyricsFile && !track.lyricsInline) {
     showLyricPlaceholder('暂无歌词文件');
     return;
   }
-  if (lyricsCache.has(track.lyricsFile)) {
-    state.lyrics = lyricsCache.get(track.lyricsFile);
-    renderLyricWindow(0);
-    updateLyricByTime(elements.audio.currentTime || 0);
+
+  if (lyricsCache.has(cacheKey)) {
+    applyLyrics(lyricsCache.get(cacheKey));
     return;
   }
   showLyricPlaceholder();
   try {
-    const response = await fetch(track.lyricsFile);
-    const text = await response.text();
-    const parsed = parseLRC(text);
-    if (!parsed.length) {
-      showLyricPlaceholder('暂无歌词');
-      return;
+    if (track.lyricsFile) {
+      const response = await fetch(track.lyricsFile);
+      const text = await response.text();
+      if (applyLyrics(parseLRC(text))) {
+        return;
+      }
     }
-    state.lyrics = parsed;
-    lyricsCache.set(track.lyricsFile, parsed);
-    renderLyricWindow(0);
-    updateLyricByTime(elements.audio.currentTime || 0);
   } catch (error) {
     console.error('歌词加载失败', error);
-    showLyricPlaceholder('歌词加载失败');
   }
+  if (applyLyrics(track.lyricsInline ? parseLRC(track.lyricsInline) : null)) {
+    return;
+  }
+  showLyricPlaceholder(track.lyricsFile ? '歌词加载失败' : '暂无歌词');
 }
 
 function renderLyricWindow(centerIndex = 0, fallbackLines = null) {
@@ -175,10 +241,11 @@ function loadTrack(index) {
   if (!track) return;
   state.currentIndex = index;
   const resolvedUrl = new URL(track.url, window.location.href).href;
+  if (elements.audio) {
+    elements.audio.src = resolvedUrl;
+  }
   if (elements.audioSource) {
     elements.audioSource.src = resolvedUrl;
-  } else {
-    elements.audio.src = resolvedUrl;
   }
   elements.audio.load();
   elements.title.textContent = track.title;
@@ -305,4 +372,7 @@ elements.audio.addEventListener('pause', () => {
   elements.toggle.setAttribute('aria-label', '播放');
   elements.disc.classList.remove('is-playing');
   updateStatusLabel();
+});
+elements.audio.addEventListener('error', () => {
+  elements.status.textContent = '音频加载失败，请确认文件仍在同一目录或使用本地服务器预览';
 });
