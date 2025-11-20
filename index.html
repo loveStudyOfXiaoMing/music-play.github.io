@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>网易云风格音乐播放器</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <header class="chrome">
+        <div class="chrome__left">
+          <span class="dot dot--red"></span>
+          <span class="dot dot--yellow"></span>
+          <span class="dot dot--green"></span>
+        </div>
+      </header>
+
+      <section class="hero">
+        <div class="disc-area">
+          <div class="disc" data-disc>
+            <div class="disc__halo"></div>
+            <img src="cover.jpg" alt="专辑封面" data-cover />
+          </div>
+          <p class="status" data-status>顺序播放 · 单曲循环已关闭</p>
+        </div>
+        <div class="info-area">
+          <div class="track-meta">
+            <div class="labels">
+              <span class="pill">歌词</span>
+              <span class="pill">百科</span>
+              <span class="pill">相关推荐</span>
+            </div>
+            <h1 data-title>七友</h1>
+            <p class="caption">
+              专辑：<span data-album>Edmond Hits 48</span> · 歌手：<span data-artist>梁汉文</span>
+            </p>
+          </div>
+          <article class="lyrics-card">
+            <header>
+              <strong>歌词</strong>
+              <span>滚动加载特效</span>
+            </header>
+            <ul class="lyrics-list" data-lyrics-list>
+              <li class="lyric-line">正在加载歌词...</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="transport">
+        <div class="progress-row">
+          <span data-current-time>00:00</span>
+          <input type="range" min="0" max="100" step="0.1" value="0" data-progress />
+          <span data-duration>00:00</span>
+        </div>
+        <div class="control-row">
+          <div style="width: 400px;"></div>
+          <div class="center-buttons">
+            <button class="round" data-prev aria-label="上一曲">⏮</button>
+            <button class="round round--big" data-toggle aria-label="播放">▶</button>
+            <button class="round" data-next aria-label="下一曲">⏭</button>
+          </div>
+          <label class="volume">
+            <span>音量</span>
+            <input type="range" min="0" max="1" step="0.01" value="0.8" data-volume />
+          </label>
+        </div>
+      </section>
+    </main>
+
+    <audio crossorigin="anonymous" data-audio>
+      <source data-audio-source type="audio/mpeg" />
+    </audio>
+    <script src="app.js" defer></script>
+  </body>
+</html>
