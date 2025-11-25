@@ -9,9 +9,9 @@ const playlist = [
     artist: '梁汉文',
     album: 'Edmond Hits 48',
     duration: 259,
-    url: './M500000DQxIe1FZ2v0.mp3',
-    cover: 'cover.jpg',
-    lyricsFile: '七友-梁汉文歌词.lrc',
+    url: './static/七友/七友.mp3',
+    cover: './static/七友/七友.jpg',
+    lyricsFile: './static/七友/七友.lrc',
     lyricsInline: `[00:00.0]七友 - 梁汉文 (Edmond Leung)
 [00:08.49]词：林夕
 [00:16.99]曲：雷颂德
@@ -68,7 +68,67 @@ const playlist = [
 [03:53.47]重生者走得的都走
 [03:56.75]谁人又为天使忧愁
 [04:00.37]甜言蜜语没有
-[04:02.38]但却有我这个好友`
+[04:02.38]但却有我这个好友`,
+    theme: {
+      bgTop: '#4b2f19',
+      bgBottom: '#120903',
+      text: '#f7f0e7',
+      muted: 'rgba(247, 240, 231, 0.75)',
+      accent: '#f1c27d',
+      accentDark: '#8b5b21'
+    }
+  },
+  {
+    title: '吴哥窟',
+    artist: '吴雨霏',
+    album: '单曲',
+    duration: 223,
+    url: './static/吴哥窟/吴哥窟.mp3',
+    cover: './static/吴哥窟/吴哥窟.jpg',
+    lyricsFile: './static/吴哥窟/吴哥窟.lrc',
+    lyricsInline: `[00:00.0]吴哥窟 - 吴雨霏 (Kary Ng)
+[00:02.86]词：林若宁
+[00:05.73]曲：陈珀
+[00:08.59]编曲：陈珀
+[00:11.46]制作人：梁荣骏
+[00:14.33]睁开双眼做场梦
+[00:19.17]问你 送我归家有何用
+[00:25.62]虽知道你的她 无言地向你尽忠
+[00:32.07]望见你隐藏你戒指 便沉重
+[00:40.21]心声安葬在岩洞
+[00:45.07]上帝 四次三番再愚弄
+[00:51.55]听得见耳边风 难逃避你那面孔
+[00:58.0]越要退出 越向你生命移动
+[01:04.48]难道我有勇气与你在一起
+[01:09.0]庆祝正日
+[01:10.99]难道你有勇气反悔诺言 你专一
+[01:17.53]两个人 多挤迫
+[01:21.01]难容纳多一番秘密
+[01:24.0]捉不紧 变得更加固执
+[02:07.84]不应该滥用名义
+[02:12.61]被你 引诱多一个名字
+[02:19.06]身份远 记忆深 浮尘滴进觉悟寺
+[02:25.53]雾里看花 没有发生任何事
+[02:32.04001]难道我有勇气与你在一起
+[02:36.53]庆祝正日
+[02:38.56]难道你有勇气反悔诺言 你专一
+[02:45.04001]两个人 多挤迫
+[02:48.55]难容纳多一番秘密
+[02:51.47]捉不紧 变得更加固执
+[02:57.95999]原谅你太理性
+[03:00.36]与我在一起要守秘密
+[03:04.46]原谅我太野性 想这段情更深刻
+[03:10.93]两个人 一消失
+[03:14.46]谣言便得不到证实
+[03:17.43]只得幽暗的晚空 记得`,
+    theme: {
+      bgTop: '#0f2733',
+      bgBottom: '#060f1c',
+      text: '#e6f3f8',
+      muted: 'rgba(230, 243, 248, 0.75)',
+      accent: '#7bdce2',
+      accentDark: '#2d7b86'
+    }
   }
 ];
 
@@ -101,6 +161,24 @@ const state = {
   lyrics: [],
   currentLyricIndex: -1
 };
+
+function applyTheme(theme) {
+  if (!theme) return;
+  const root = document.documentElement;
+  const map = {
+    '--bg-top': theme.bgTop,
+    '--bg-bottom': theme.bgBottom,
+    '--text': theme.text,
+    '--muted': theme.muted,
+    '--accent': theme.accent,
+    '--accent-dark': theme.accentDark
+  };
+  Object.entries(map).forEach(([cssVar, value]) => {
+    if (value) {
+      root.style.setProperty(cssVar, value);
+    }
+  });
+}
 
 function initStudentInfo() {
   if (elements.studentId && studentInfo.id) {
@@ -168,6 +246,18 @@ async function loadLyrics(track) {
 
   if (!track.lyricsFile && !track.lyricsInline) {
     showLyricPlaceholder('暂无歌词文件');
+    return;
+  }
+
+  const isFileProtocol = window.location.protocol === 'file:';
+  if (isFileProtocol && track.lyricsInline) {
+    // 在 file:// 打开时直接使用内联歌词，避免浏览器阻止本地文件的跨源请求。
+    if (applyLyrics(parseLRC(track.lyricsInline))) return;
+    showLyricPlaceholder('歌词加载失败');
+    return;
+  }
+  if (isFileProtocol && !track.lyricsInline) {
+    showLyricPlaceholder('请通过本地服务器打开以加载歌词');
     return;
   }
 
@@ -240,6 +330,7 @@ function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
   state.currentIndex = index;
+  applyTheme(track.theme);
   const resolvedUrl = new URL(track.url, window.location.href).href;
   if (elements.audio) {
     elements.audio.src = resolvedUrl;
@@ -302,10 +393,6 @@ function nextTrack() {
 }
 
 function prevTrack() {
-  if (elements.audio.currentTime > 3) {
-    elements.audio.currentTime = 0;
-    return;
-  }
   const prevIndex = (state.currentIndex - 1 + playlist.length) % playlist.length;
   playTrack(prevIndex);
 }
