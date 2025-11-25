@@ -150,6 +150,7 @@ const elements = {
   prev: document.querySelector('[data-prev]'),
   next: document.querySelector('[data-next]'),
   volume: document.querySelector('[data-volume]'),
+  speed: document.querySelector('[data-speed]'),
   studentId: document.querySelector('[data-student-id]'),
   studentName: document.querySelector('[data-student-name]'),
   disc: document.querySelector('[data-disc]')
@@ -159,7 +160,8 @@ const state = {
   currentIndex: 0,
   isPlaying: false,
   lyrics: [],
-  currentLyricIndex: -1
+  currentLyricIndex: -1,
+  playbackRate: 1
 };
 
 function applyTheme(theme) {
@@ -199,7 +201,18 @@ function formatTime(value) {
 function updateStatusLabel() {
   const order = `${state.currentIndex + 1}/${playlist.length}`;
   const play = state.isPlaying ? '播放中' : '待播放';
-  elements.status.textContent = `${play} · 第 ${order} 首`;
+  const rate = state.playbackRate || 1;
+  const rateText = rate !== 1 ? ` · 倍速 ${rate}x` : '';
+  elements.status.textContent = `${play} · 第 ${order} 首${rateText}`;
+}
+
+function applyPlaybackRateFromUI() {
+  if (!elements.audio) return 1;
+  const raw = elements.speed ? Number(elements.speed.value) : 1;
+  const rate = Number.isFinite(raw) && raw > 0 ? raw : 1;
+  elements.audio.playbackRate = rate;
+  state.playbackRate = rate;
+  return rate;
 }
 
 function showLyricPlaceholder(message = '歌词加载中...') {
@@ -346,6 +359,7 @@ function loadTrack(index) {
   elements.duration.textContent = formatTime(track.duration);
   elements.progress.value = 0;
   elements.currentTime.textContent = '00:00';
+  applyPlaybackRateFromUI();
   loadLyrics(track);
   updateStatusLabel();
 }
@@ -423,6 +437,14 @@ function handleVolumeInput(event) {
   elements.audio.volume = Number(event.target.value);
 }
 
+function handleSpeedChange(event) {
+  const value = Number(event.target.value);
+  if (!Number.isFinite(value) || value <= 0) return;
+  elements.audio.playbackRate = value;
+  state.playbackRate = value;
+  updateStatusLabel();
+}
+
 function bootstrap() {
   initStudentInfo();
   loadTrack(state.currentIndex);
@@ -443,6 +465,7 @@ elements.prev.addEventListener('click', prevTrack);
 elements.next.addEventListener('click', nextTrack);
 elements.progress.addEventListener('input', handleProgressInput);
 elements.volume.addEventListener('input', handleVolumeInput);
+elements.speed.addEventListener('change', handleSpeedChange);
 
 elements.audio.addEventListener('timeupdate', handleTimeUpdate);
 elements.audio.addEventListener('ended', nextTrack);
